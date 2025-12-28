@@ -3,8 +3,10 @@ import fetch from "node-fetch";
 class StackVerify {
   constructor({ apiKey, baseUrl = "https://stackverify.site/api/v1" }) {
     if (!apiKey) throw new Error("API key is required");
+
     this.apiKey = apiKey;
     this.baseUrl = baseUrl.replace(/\/+$/, "");
+    this.mode = apiKey.startsWith("sk_test_") ? "test" : "live";
   }
 
   async _request(path, options = {}) {
@@ -16,26 +18,63 @@ class StackVerify {
       ...options,
     });
 
-    const text = await res.text().catch(() => null);
+    let data;
+    try {
+      data = await res.json();
+    } catch {
+      data = null;
+    }
 
-    if (!res.ok) throw new Error(`StackVerify SDK Error: ${text || res.status}`);
-    try { return JSON.parse(text); } catch { return text; }
+    if (!res.ok) {
+      const error = new Error(data?.message || "StackVerify API Error");
+      error.status = res.status;
+      error.error = data?.error || null;
+      error.retry_after = data?.retry_after || null;
+      throw error;
+    }
+
+    return data;
   }
 
-  async sendSMS({ recipients, body, sender_id }) {
-    if (!recipients || !Array.isArray(recipients) || recipients.length === 0)
+  /**
+   * Send SMS
+   * Required permission: sms:send
+   */
+  async sendSMS({
+    recipients,
+    body,
+    sender_id,
+    templateId,
+    scheduleAt,
+  }) {
+    if (!Array.isArray(recipients) || recipients.length === 0)
       throw new Error("recipients must be a non-empty array");
-    if (!body) throw new Error("body is required");
-    if (!sender_id) throw new Error("sender_id is required");
+
+    if (!body && !templateId)
+      throw new Error("Either body or templateId is required");
+
+    if (!sender_id)
+      throw new Error("sender_id is required");
 
     return this._request("/sms/send", {
       method: "POST",
-      body: JSON.stringify({ recipients, body, sender_id }),
+      body: JSON.stringify({
+        recipients,
+        body,
+        sender_id,
+        templateId,
+        scheduleAt,
+      }),
     });
   }
 
+  /**
+   * Get SMS Status
+   * Required permission: sms:read
+   */
   async getSMSStatus(messageId) {
     if (!messageId) throw new Error("messageId is required");
+
     return this._request(`/sms/status/${encodeURIComponent(messageId)}`);
   }
 }
