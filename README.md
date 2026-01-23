@@ -175,3 +175,14 @@ Environment
 ---
 ## 📜 License
 This project is licensed under the MIT License.
+
+## 👨‍💻 Authors
+- Morgan Miller
+https://github.com/Frost-bit-star
+- Samwuel Simiyu
+https://github.com/Trojan-254
+- 🆘 Need Help?
+- 🌐 Website: https://stackverify.site
+- 📧 Support: support@stackverify.site
+-🐙 GitHub Issues: Open an issue on this repository
+.
