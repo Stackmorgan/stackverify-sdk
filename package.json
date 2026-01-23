@@ -1,24 +1,41 @@
 {
   "name": "stackverify",
   "version": "2.0.0",
-  "description": "Node.js SDK for StackVerify API (SMS, Email, WhatsApp)",
-  "main": "dist/index.js",
+  "description": "Universal SDK for StackVerify API (SMS, Email, WhatsApp)",
   "type": "module",
+
+  "main": "./dist/index.js",
+  "exports": {
+    ".": "./dist/index.js"
+  },
+
+  "files": [
+    "dist"
+  ],
+
   "scripts": {
-    "build": "cp src/index.js dist/index.js",
+    "build": "mkdir -p dist && cp src/index.js dist/index.js",
     "test": "node test/sms.test.js"
   },
+
   "keywords": [
     "stackverify",
     "sms",
-    "whatsapp",
     "email",
-    "sdk"
+    "whatsapp",
+    "sdk",
+    "api",
+    "messaging"
   ],
-  "author": "morgan miller",
+
+  "author": "Morgan Miller",
   "license": "MIT",
-  "dependencies": {
-    "node-fetch": "^3.3.1"
+
+  "optionalDependencies": {
+    "node-fetch": "^3.3.2"
   },
-  "devDependencies": {}
+
+  "engines": {
+    "node": ">=16"
+  }
 }
