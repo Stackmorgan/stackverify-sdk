@@ -1,82 +1,177 @@
-# StackVerify SDK
+## StackVerify SDK
+StackVerify is a JavaScript library that helps you send SMS messages and Email campaigns using the StackVerify platform.
+It works in Node.js, browsers, and modern runtimes and is designed to be simple—even if you are new to APIs.
 
-A simple Node.js SDK to interact with the StackVerify API for sending SMS and checking message status.
-
-## Installation
-
-```bash
+**🧠 What Can This Library Do?***
+With StackVerify SDK, you can:
+- ✅ Send SMS messages
+- ✅ Check SMS delivery status
+- ✅ Send email campaigns (newsletters, announcements, alerts)
+- ✅ Use one API key for everything
+You do not need to understand servers or protocols to use it.
+- 📦 Installation (Step by Step)
+- 1️⃣ Install using npm
+Copy code
+Bash
+```
 npm install stackverify
 ```
-# Usage
-
-Get your apikey .
-- [@stackverify](https://stackverify.site)
-
+- 2️⃣ (Optional) Node.js 16 users only
+If you are using Node.js 16, install this once:
+Copy code
+Bash
+```
+npm install node-fetch
+```
+Node.js 18+, browsers, Bun, Deno, and edge runtimes work automatically.
+🔑 Get Your API Key
+**Before using the library, you need an API key.**
+- Visit 👉 https://stackverify.site
+- Create an account
+- Copy your API key (it looks like sk_live_... or sk_test_...)
+## 🚀 Your First Example (Very Simple)
+Copy code
+Js
 ```
 import StackVerify from "stackverify";
 
-// Initialize the SDK
-const stack = new StackVerify({ apiKey: "YOUR_API_KEY" });
-
-// Send an SMS and check status
-async function main() {
+// Create a StackVerify client
+const stack = new StackVerify({
+  apiKey: "YOUR_API_KEY"
+});
+```
+That’s it.
+Now you can send SMS or email.
+## 📩 Sending an SMS (Beginner Friendly)
+Example: Send a text message
+Copy code
+Js
+```
+async function sendMessage() {
   try {
-    const response = await stack.sendSMS({
-      recipients: ["+1234567890"], // array of phone numbers
-      body: "Hello! This is a test message.",
+    const result = await stack.sendSMS({
+      recipients: ["+1234567890"], // Phone numbers
+      body: "Hello! This is my first SMS 🚀",
       sender_id: "SMS"
     });
-    console.log("SMS sent:", response);
 
-    const status = await stack.getSMSStatus(response.message_id);
-    console.log("SMS status:", status);
-
-  } catch (err) {
-    console.error("Error:", err.message);
+    console.log("SMS sent successfully:", result);
+  } catch (error) {
+    console.error("Something went wrong:", error.message);
   }
 }
 
-main();
-
+sendMessage();
 ```
-# Api
+## 📌 What these mean
+recipients → List of phone numbers
+body → Message text
+sender_id → Name shown as sender
+📡 Checking SMS Status
+Copy code
+Js
+```
+const status = await stack.getSMSStatus("MESSAGE_ID");
+console.log(status);
+```
+You get MESSAGE_ID from sendSMS().
+## 📧 Sending Emails (Step by Step)
+Sending emails uses campaigns.
+Think of a campaign as one email sent to many people.
+Step 1️⃣ Check Your Email Domain
+Before sending emails, your domain must be verified.
+Copy code
+Js
+```
+const domain = await stack.getDomainStatus("DOMAIN_ID");
 
+if (domain.ready_for_sending) {
+  console.log("Domain is ready to send emails!");
+}
+```
+## Step 2️⃣ Create an Email Campaign
+Copy code
+Js
+```
+const campaign = await stack.createEmailCampaign({
+  name: "Welcome Campaign",
+  subject: "Welcome to StackVerify 🎉",
+  html_body: "<h1>Hello!</h1><p>Thanks for joining us.</p>",
+  text_body: "Hello! Thanks for joining us.",
+  contact_list_id: "CONTACT_LIST_ID",
+  sending_domain_id: "DOMAIN_ID",
+  status: "draft"
+});
+
+console.log("Campaign created:", campaign);
+```
+## Step 3️⃣ Start the Campaign (Send Emails)
+Copy code
+Js
+```
+await stack.startCampaign(campaign.id);
+console.log("Emails are being sent!");
+```
+## 📘 Library API (Simple Explanation)
+Create Client
+Copy code
+Js
+```
 new StackVerify({ apiKey, baseUrl })
-
-apiKey (string) — Your StackVerify API key (required)
-
-baseUrl (string) — API base URL (default: https://stackverify.site/api/v1)
-
-sendSMS({ recipients, body, sender_id })
-
-Send an SMS.
-
-recipients — array of phone numbers (required)
-
-body — SMS message text (required)
-
-sender_id — your sender ID (required)
-
+apiKey → Your StackVerify API key (required)
+baseUrl → API URL (optional, advanced users only)
+SMS Methods
+sendSMS(options)
+Send a text message.
+Required:
+recipients (array)
+sender_id
+body or templateId
 getSMSStatus(messageId)
-
-Get the status of a sent message.
-
-messageId — ID returned by sendSMS (required)
-## Badges
-
-
-[![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](https://choosealicense.com/licenses/mit/)
-[![GPLv3 License](https://img.shields.io/badge/License-GPL%20v3-yellow.svg)](https://opensource.org/licenses/)
-[![AGPL License](https://img.shields.io/badge/license-AGPL-blue.svg)](http://www.gnu.org/licenses/agpl-3.0)
-
-
-## Authors
-
-- [@morgan miller](https://www.github.com/Frost-bit-star)
-
-- [@samwuel simiyu](https://github.com/Trojan-254)
-
-## 🔗 Links
-[![linkedin](https://img.shields.io/badge/linkedin-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/)
-[![twitter](https://img.shields.io/badge/twitter-1DA1F2?style=for-the-badge&logo=twitter&logoColor=white)](https://twitter.com/)
-
+Check delivery status of a sent SMS.
+Email Methods
+getDomainStatus(domainId)
+Check if email domain is verified.
+createEmailCampaign(options)
+Create an email campaign.
+Required:
+name
+subject
+contact_list_id
+sending_domain_id
+startCampaign(campaignId)
+Send the email campaign.
+```
+## ❗ Error Handling (Important)
+If something goes wrong, the library throws an error:
+Copy code
+Js
+```
+try {
+  // API call
+} catch (error) {
+  console.error(error.message);
+}
+```
+**Common reasons:**
+- Invalid API key
+- Missing required fields
+- Domain not verified
+- Network issues
+## 🌍 Where Does This Work?
+Environment
+**Supported**
+- Browser
+✅
+- Node.js 16+
+✅
+- Node.js 18+
+✅
+- Bun
+✅
+- Deno
+✅
+- Cloudflare Workers
+---
+## 📜 License
+This project is licensed under the MIT License.
