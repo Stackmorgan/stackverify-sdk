@@ -1,32 +1,16 @@
 /* --------------------------------------------------
  * StackVerify Universal SDK
- * Works in Browser, Node, Bun, Deno, Workers
+ * Works in Browser, Node 18+, Bun, Deno, Workers
  * -------------------------------------------------- */
 
-let _fetch;
-
-/**
- * Resolve fetch in any environment
- */
-async function getFetch() {
-  if (_fetch) return _fetch;
-
-  // Native fetch (Browser, Node 18+, Bun, Deno, Workers)
+function resolveFetch() {
   if (typeof globalThis.fetch === "function") {
-    _fetch = globalThis.fetch.bind(globalThis);
-    return _fetch;
+    return globalThis.fetch.bind(globalThis);
   }
 
-  // Node <18 fallback
-  try {
-    const mod = await import("node-fetch");
-    _fetch = mod.default;
-    return _fetch;
-  } catch {
-    throw new Error(
-      "Fetch API is not available. Please install 'node-fetch' or upgrade Node.js."
-    );
-  }
+  throw new Error(
+    "Fetch API not found. If you're using Node <18, please polyfill fetch (e.g. node-fetch)."
+  );
 }
 
 /* -------------------------------------------------- */
@@ -39,15 +23,14 @@ class StackVerify {
 
     this.apiKey = apiKey;
     this.baseUrl = baseUrl.replace(/\/+$/, "");
+    this.fetch = resolveFetch();
     this.mode = apiKey.startsWith("sk_test_") ? "test" : "live";
   }
 
   /* ---------------- Internal Request ---------------- */
 
   async _request(path, options = {}) {
-    const fetch = await getFetch();
-
-    const res = await fetch(`${this.baseUrl}${path}`, {
+    const res = await this.fetch(`${this.baseUrl}${path}`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -59,9 +42,7 @@ class StackVerify {
     let data = null;
     try {
       data = await res.json();
-    } catch {
-      /* non-json response */
-    }
+    } catch {}
 
     if (!res.ok) {
       const err = new Error(
@@ -79,10 +60,6 @@ class StackVerify {
 
   /* ===================== SMS ===================== */
 
-  /**
-   * Send SMS
-   * Permission: sms:send
-   */
   async sendSMS({
     recipients,
     body,
@@ -93,11 +70,9 @@ class StackVerify {
     if (!Array.isArray(recipients) || recipients.length === 0) {
       throw new Error("sendSMS: recipients must be a non-empty array");
     }
-
     if (!body && !templateId) {
       throw new Error("sendSMS: body or templateId is required");
     }
-
     if (!sender_id) {
       throw new Error("sendSMS: sender_id is required");
     }
@@ -114,36 +89,22 @@ class StackVerify {
     });
   }
 
-  /**
-   * Get SMS status
-   * Permission: sms:read
-   */
   async getSMSStatus(messageId) {
     if (!messageId) {
       throw new Error("getSMSStatus: messageId is required");
     }
-
-    return this._request(
-      `/v1/sms/status/${encodeURIComponent(messageId)}`
-    );
+    return this._request(`/v1/sms/status/${encodeURIComponent(messageId)}`);
   }
 
   /* ===================== EMAIL ===================== */
 
-  /**
-   * Check if sending domain is ready
-   */
   async getDomainStatus(domainId) {
     if (!domainId) {
       throw new Error("getDomainStatus: domainId is required");
     }
-
     return this._request(`/domains/${encodeURIComponent(domainId)}`);
   }
 
-  /**
-   * Create an email campaign
-   */
   async createEmailCampaign({
     name,
     subject,
@@ -155,8 +116,7 @@ class StackVerify {
     scheduled_at = null,
   } = {}) {
     if (!name) throw new Error("createEmailCampaign: name is required");
-    if (!subject)
-      throw new Error("createEmailCampaign: subject is required");
+    if (!subject) throw new Error("createEmailCampaign: subject is required");
     if (!contact_list_id)
       throw new Error("createEmailCampaign: contact_list_id is required");
     if (!sending_domain_id)
@@ -178,21 +138,15 @@ class StackVerify {
     });
   }
 
-  /**
-   * Start an email campaign
-   */
   async startCampaign(campaignId) {
     if (!campaignId) {
       throw new Error("startCampaign: campaignId is required");
     }
-
     return this._request(
       `/campaigns/${encodeURIComponent(campaignId)}/start`,
       { method: "POST" }
     );
   }
 }
-
-/* -------------------------------------------------- */
 
 export default StackVerify;
